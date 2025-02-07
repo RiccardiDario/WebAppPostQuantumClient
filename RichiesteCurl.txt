@@ -6,7 +6,7 @@ Effettua una richiesta HTTPS utilizzando TLS 1.3 e kem specifico, senza verifica
 curl --tlsv1.3 --curves x25519_mlkem512 -k  https://nginx_pq:4433
 
 Effettua una richiesta HTTPS utilizzando TLS 1.3, verificando il certificato del server con una CA specifica
-curl --tlsv1.3 --cacert /opt/certs/CA.crt -v https://nginx_pq:4433
+curl --tlsv1.3 --cacert /opt/certs/CA.crt -v https://192.168.1.3:4433
 
 Effettua una richiesta HTTPS utilizzando TLS 1.3 e un kem specifico kyber512
 verificando il certificato del server

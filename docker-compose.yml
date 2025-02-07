@@ -1,9 +1,9 @@
 services:
-  client-analysis:
+  client:
     image: riccardidario1/client:latest
-    container_name: client_analysis
+    container_name: client
     volumes:
-      - ./output:/app/output
+      - ./report:/app/output
       - ./certs:/opt/certs
       - ./tls_keys:/tls_keys
       - ./start_client.py:/app/start_client.py
@@ -11,7 +11,7 @@ services:
     tty: true
     environment:
       - SSLKEYLOGFILE=/tls_keys/tls-secrets.log
-    entrypoint: ["/bin/sh", "-c", "sleep 7 && python3 /app/start_client.py && tail -f /dev/null"]
+    #entrypoint: ["/bin/sh", "-c", "sleep 7 && python3 /app/start_client.py && tail -f /dev/null"]
   
 
   wireshark:

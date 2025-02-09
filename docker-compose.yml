@@ -14,16 +14,16 @@ services:
     #entrypoint: ["/bin/sh", "-c", "sleep 7 && python3 /app/start_client.py && tail -f /dev/null"]
   
 
-  wireshark:
-    image: openquantumsafe/wireshark:latest
-    container_name: pq_wireshark
-    network_mode: "host"
-    environment:
-      - DISPLAY=host.docker.internal:0.0
-    volumes:
-      - /tmp/.X11-unix:/tmp/.X11-unix 
-      - ./pcap:/pcap
-    stdin_open: true
-    tty: true
+  #wireshark:
+    #image: openquantumsafe/wireshark:latest
+    #container_name: pq_wireshark
+    #network_mode: "host"
+    #environment:
+      #- DISPLAY=host.docker.internal:0.0
+    #volumes:
+      #- /tmp/.X11-unix:/tmp/.X11-unix 
+      #- ./pcap:/pcap
+    #stdin_open: true
+    #tty: true
     #command: >
       #wireshark -k -i any -f "tcp port 4433 and host 192.168.1.100" -w /pcap/capture.pcap

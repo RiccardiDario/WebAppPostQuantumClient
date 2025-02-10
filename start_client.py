@@ -8,7 +8,7 @@ logging.basicConfig(level=logging.DEBUG, format="%(asctime)s [%(levelname)s] %(m
 CURL_COMMAND_TEMPLATE = ["curl", "--tlsv1.3", "--curves", "x25519_mlkem512", "-k", "-w",
 "Connect Time: %{time_connect}, TLS Handshake: %{time_appconnect}, Total Time: %{time_total}, %{http_code}\n","-s", "https://192.168.1.115:4433"]
 
-NUM_REQUESTS, OUTPUT_FILE, MONITOR_FILE, TRACE_LOG_DIR = 500, "/app/output/request_client.csv", "/app/output/system_client.csv", "/app/logs/"
+NUM_REQUESTS, OUTPUT_FILE, MONITOR_FILE, TRACE_LOG_DIR = 750, "/app/output/request_client.csv", "/app/output/system_client.csv", "/app/logs/"
 os.makedirs(TRACE_LOG_DIR, exist_ok=True)
 
 active_requests, active_requests_lock, global_stats = 0, Lock(), {"cpu_usage": [], "memory_usage": []}

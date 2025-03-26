@@ -1,29 +1,33 @@
+volumes:
+  pcap:
+  tls_keys:
+
 services:
   client:
-    image: riccardidario1/client:latest
+    image: riccardidario1/client-analysis:latest
     container_name: client
     volumes:
+      - pcap:/app/pcap
+      - tls_keys:/tls_keys
       - ./report:/app/output
-      #- ./certs:/opt/certs
-      #- ./tls_keys:/tls_keys
-      - ./start_client.py:/app/start_client.py
+      - ./client/start_client.py:/app/start_client.py
     stdin_open: true
     tty: true
     environment:
       - SSLKEYLOGFILE=/tls_keys/tls-secrets.log
-    #entrypoint: ["/bin/sh", "-c", "sleep 7 && python3 /app/start_client.py && tail -f /dev/null"]
+    entrypoint: ["/bin/sh", "-c", "sleep 2 && python3 /app/start_client.py && tail -f /dev/null"]
   
 
-  #wireshark:
-    #image: openquantumsafe/wireshark:latest
-    #container_name: pq_wireshark
-    #network_mode: "host"
-    #environment:
-      #- DISPLAY=host.docker.internal:0.0
-    #volumes:
-      #- /tmp/.X11-unix:/tmp/.X11-unix 
-      #- ./pcap:/pcap
-    #stdin_open: true
-    #tty: true
-    #command: >
-      #wireshark -k -i any -f "tcp port 4433 and host 192.168.1.100" -w /pcap/capture.pcap
+  wireshark:
+    image: openquantumsafe/wireshark:latest
+    container_name: pq_wireshark
+    network_mode: "host"
+    environment:
+      - DISPLAY=host.docker.internal:0.0
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix 
+      - pcap:/pcap
+    stdin_open: true
+    tty: true
+    command: >
+      tshark -i any -f "tcp port 4433 and host 192.168.1.100" -w /pcap/capture.pcap

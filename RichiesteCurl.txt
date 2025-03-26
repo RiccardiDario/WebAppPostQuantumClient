@@ -3,11 +3,29 @@ Effettua una richiesta HTTPS utilizzando TLS 1.3, senza verificare i certificati
 curl --tlsv1.3 -k https://nginx_pq:4433
 
 Effettua una richiesta HTTPS utilizzando TLS 1.3 e kem specifico, senza verificare i certificati del server
-curl --tlsv1.3 --curves x25519_mlkem512 -k  https://192.168.1.115:4433
+curl --tlsv1.3 --curves x25519_mlkem512 -k  https://nginx_pq:4433
 
 Effettua una richiesta HTTPS utilizzando TLS 1.3, verificando il certificato del server con una CA specifica
-curl --tlsv1.3 --cacert /opt/certs/CA.crt -v https://192.168.1.3:4433
+curl --tlsv1.3 --cacert /opt/certs/CA.crt -v https://nginx_pq:4433
 
-Effettua una richiesta HTTPS utilizzando TLS 1.3 e un kem specifico kyber512
-verificando il certificato del server
+Effettua una richiesta HTTPS utilizzando TLS 1.3 e un kem specifico kyber512 verificando il certificato del server
 curl --tlsv1.3 --curves kyber512 --cacert /opt/certs/CA.crt -v https://nginx_pq:4433
+
+Comando per analizzare tutto il traffico all'interno del container del client:
+tshark -r /app/pcap/capture.pcap -q -z conv,tcp
+
+Comando per analizzare solo il traffico TLS all'interno del container del client:
+tshark -r /app/pcap/capture.pcap -Y "tls.handshake" -T fields -e ip.src -e tcp.srcport -e ip.dst -e tcp.dstport -e frame.len -e tls.handshake.type -o tls.keylog_file:/tls_keys/tls-secrets.log
+
+Il motivo della discrepanza che stai osservando (cioè, il fatto che nella cattura Wireshark risultano più byte scambiati rispetto ai log di trace di curl) è legato principalmente alla natura stessa dei dati che stai confrontando.
+Cosa sta succedendo esattamente?
+Log di Curl
+Il log di curl mostra esclusivamente i dati applicativi effettivamente scambiati all'interno della connessione TLS. In altre parole, curl mostra soltanto i dati applicativi (richieste HTTP, risposte HTTP e handshake TLS), escludendo completamente i dati relativi al livello inferiore della pila TCP/IP, come gli header TCP, IP, ed Ethernet.
+Cattura PCAP di Wireshark (tshark)
+Al contrario, il risultato della cattura Wireshark mostra il numero totale di byte scambiati a livello TCP, includendo quindi:
+Dati applicativi (che è ciò che vedi anche in curl)
+Header TCP (che aggiungono circa 20 byte per pacchetto)
+Header IP (20 bytes per pacchetto se IPv4)
+Header Ethernet (14 bytes per pacchetto)
+Handshake TCP (SYN, ACK) e TLS Handshake
+Quindi, i dati mostrati da tshark includono tutto il traffico di rete necessario per stabilire la connessione, mantenerla aperta, e anche terminare la connessione (chiusura con FIN), oltre a eventuali ritrasmissioni dovute a perdita pacchetti.

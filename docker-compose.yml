@@ -2,6 +2,10 @@ volumes:
   pcap:
   tls_keys:
 
+networks:
+  pq_net:
+    name: pq_net
+
 services:
   client:
     image: riccardidario1/client-analysis:latest
@@ -10,12 +14,15 @@ services:
       - pcap:/app/pcap
       - tls_keys:/tls_keys
       - ./report:/app/output
-      - ./client/start_client.py:/app/start_client.py
+      - ./start_client.py:/app/start_client.py
     stdin_open: true
     tty: true
+    networks:
+      - pq_net
     environment:
       - SSLKEYLOGFILE=/tls_keys/tls-secrets.log
-    entrypoint: ["/bin/sh", "-c", "sleep 2 && python3 /app/start_client.py && tail -f /dev/null"]
+    entrypoint: ["/bin/sh", "-c", " tail -f /dev/null"]
+    #entrypoint: ["/bin/sh", "-c", "sleep 2 && python3 /app/start_client.py && tail -f /dev/null"]
   
 
   wireshark:

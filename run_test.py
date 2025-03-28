@@ -2,7 +2,7 @@
 #kem_list = ["secp256r1", "mlkem512", "p256_mlkem512", "secp384r1", "mlkem768", "p384_mlkem768", "secp521r1", "mlkem1024","p521_mlkem1024"]
 
 import subprocess, time, re, os
-kem_list = ["secp256r1", "mlkem512", "p256_mlkem512", "secp384r1", "mlkem768", "p384_mlkem768", "secp521r1", "mlkem1024","p521_mlkem1024"]
+kem_list = ["secp256r1", "mlkem512", "p256_mlkem512"]
 NUM_RUNS, TIMEOUT, SLEEP = 5, 300, 2
 CLIENT = "client"
 CLIENT_DONE = r"\[INFO\] Test completato in .* Report: /app/output/request_logs/request_client\d+\.csv"
@@ -68,7 +68,7 @@ def run_single_test(i):
         time.sleep(SLEEP)
 
 # Esecuzione principale
-for kem in zip(kem_list):
+for kem in kem_list:
     print(f"\n🔁 Inizio test per KEM: {kem}")
     update_kem(kem)
 

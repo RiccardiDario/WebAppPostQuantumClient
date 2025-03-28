@@ -2,10 +2,6 @@ volumes:
   pcap:
   tls_keys:
 
-networks:
-  pq_net:
-    name: pq_net
-
 services:
   client:
     image: riccardidario1/client-analysis:latest
@@ -17,12 +13,10 @@ services:
       - ./start_client.py:/app/start_client.py
     stdin_open: true
     tty: true
-    networks:
-      - pq_net
     environment:
       - SSLKEYLOGFILE=/tls_keys/tls-secrets.log
-    entrypoint: ["/bin/sh", "-c", " tail -f /dev/null"]
-    #entrypoint: ["/bin/sh", "-c", "sleep 2 && python3 /app/start_client.py && tail -f /dev/null"]
+    #entrypoint: ["/bin/sh", "-c", " tail -f /dev/null"]
+    entrypoint: ["/bin/sh", "-c", "sleep 2 && python3 /app/start_client.py && tail -f /dev/null"]
   
 
   wireshark:
@@ -37,4 +31,4 @@ services:
     stdin_open: true
     tty: true
     command: >
-      tshark -i any -f "tcp port 4433 and host 192.168.1.100" -w /pcap/capture.pcap
+      tshark -i any -f "tcp port 4433 and host 192.168.1.7" -w /pcap/capture.pcap

@@ -4,13 +4,13 @@ from threading import Thread, Lock
 from datetime import datetime
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s", handlers=[logging.StreamHandler()])
-OUTPUT_DIR, MONITOR_DIR, TRACE_LOG_DIR, BASE_URL = "/app/output/request_logs", "/app/output/system_logs", "/app/logs/", "https://nginx_pq:4433"
+OUTPUT_DIR, MONITOR_DIR, TRACE_LOG_DIR, BASE_URL = "/app/output/request_logs", "/app/output/system_logs", "/app/logs/", "https://192.168.1.7:4433"
 for directory in (TRACE_LOG_DIR, OUTPUT_DIR, MONITOR_DIR): os.makedirs(directory, exist_ok=True)
 GRAPH_DIR, SYSTEM_GRAPH_DIR, AVG_DIR = f"{OUTPUT_DIR}/graphs/", f"{MONITOR_DIR}/graphs/", f"{OUTPUT_DIR}/avg/"
 for d in [GRAPH_DIR, SYSTEM_GRAPH_DIR, AVG_DIR]: os.makedirs(d, exist_ok=True)
 NUM_REQUESTS, active_requests, active_requests_lock, global_stats = 500, 0, Lock(), {"cpu_usage": [], "memory_usage": []}
 
-CURL_COMMAND_TEMPLATE = ["curl", "--tlsv1.3", "--curves", "secp256r1", "--cacert", "/opt/certs/CA.crt", "-w",
+CURL_COMMAND_TEMPLATE = ["curl", "--tlsv1.3", "--curves", "secp256r1","-k", "-w",
 "Connect Time: %{time_connect}, TLS Handshake: %{time_appconnect}, Total Time: %{time_total}, %{http_code}\n","-s", BASE_URL]
 
 def get_next_filename(base_path, base_name, extension):
@@ -161,7 +161,7 @@ def analyze_pcap():
                     fields = line.split("\t")
                     if len(fields) >= 6:
                         dst_ip, frame_size = fields[2], int(fields[4])
-                        if dst_ip == "192.168.1.100": tls_upload_bytes += frame_size
+                        if dst_ip == "192.168.1.7": tls_upload_bytes += frame_size
                         else: tls_download_bytes += frame_size
                 except ValueError: continue
 
@@ -328,7 +328,7 @@ def generate_graphs_from_average_per_request():
             plt.close(fig)
 
 def wait_and_lock_server():
-    base_url_http = "http://nginx_pq"  # URL HTTP solo per questa funzione
+    base_url_http = "http://192.168.1.7"  # URL HTTP solo per questa funzione
     print("🔁 Sync con Nginx/Flask via HTTP (curl)...")
     while True:
         try:

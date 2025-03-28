@@ -1,4 +1,4 @@
-import json, os, re, math, time, logging, subprocess, csv, psutil, pandas as pd, matplotlib.pyplot as plt
+import json, os, re, math, time, logging, subprocess, csv, psutil, pandas as pd, matplotlib.pyplot as plt, 
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from threading import Thread, Lock
 from datetime import datetime
@@ -10,7 +10,7 @@ GRAPH_DIR, SYSTEM_GRAPH_DIR, AVG_DIR = f"{OUTPUT_DIR}/graphs/", f"{MONITOR_DIR}/
 for d in [GRAPH_DIR, SYSTEM_GRAPH_DIR, AVG_DIR]: os.makedirs(d, exist_ok=True)
 NUM_REQUESTS, active_requests, active_requests_lock, global_stats = 500, 0, Lock(), {"cpu_usage": [], "memory_usage": []}
 
-CURL_COMMAND_TEMPLATE = ["curl", "--tlsv1.3", "--curves", "secp256r1","-k", "-w",
+CURL_COMMAND_TEMPLATE = ["curl", "--tlsv1.3", "--curves", "p256_mlkem512","-k", "-w",
 "Connect Time: %{time_connect}, TLS Handshake: %{time_appconnect}, Total Time: %{time_total}, %{http_code}\n","-s", BASE_URL]
 
 def get_next_filename(base_path, base_name, extension):
@@ -266,7 +266,8 @@ def generate_graphs_from_average_per_request():
         kem, sig = df_batch["KEM"].iloc[0], df_batch["Signature"].iloc[0]
         cert_size = int(df_batch["Avg_Cert_Size(B)"].iloc[0])
         batch_labels.append(f"{kem}\n{sig}\n{cert_size} B")
-        for m in boxplot_data: boxplot_data[m].append(df_batch[m].tolist())
+        for m in boxplot_data:
+            boxplot_data[m].append(df_batch[m].tolist())
 
         for i in range(0, requests_per_batch, requests_per_plot):
             df_subset = df_batch.iloc[i:i + requests_per_plot].reset_index(drop=True)
@@ -280,7 +281,8 @@ def generate_graphs_from_average_per_request():
             plt.title(f"Elapsed Time per Request\nKEM: {kem} | Signature: {sig}")
             plt.legend(title=f"Certificate Size: {cert_str}")
             plt.grid(True); plt.tight_layout()
-            plt.savefig(os.path.join(GRAPH_DIR, f"elapsed_time_graph_batch_{b+1}_{x[0]}_{x[-1]}.png")); plt.close()
+            plt.savefig(os.path.join(GRAPH_DIR, f"elapsed_time_graph_batch_{b+1}_{x[0]}_{x[-1]}.png"))
+            plt.close()
 
             # TLS Breakdown
             connect = df_subset["Avg_Connect_Time(ms)"]
@@ -294,7 +296,8 @@ def generate_graphs_from_average_per_request():
             plt.title(f"Timing Breakdown for TLS Connections\nKEM: {kem} | Signature: {sig}")
             plt.legend(title=f"Certificate Size: {cert_str}")
             plt.grid(axis="y", linestyle="--", alpha=0.7); plt.tight_layout()
-            plt.savefig(os.path.join(GRAPH_DIR, f"tls_avg_graph_batch_{b+1}_{x[0]}_{x[-1]}.png"), dpi=300); plt.close()
+            plt.savefig(os.path.join(GRAPH_DIR, f"tls_avg_graph_batch_{b+1}_{x[0]}_{x[-1]}.png"), dpi=300)
+            plt.close()
 
     # Boxplot segmentati ogni 3 batch
     max_per_image = 3
@@ -313,12 +316,29 @@ def generate_graphs_from_average_per_request():
 
             fig = plt.figure(figsize=(max(6, len(labels_subset) * 1.8), 6))
             ax = fig.add_axes([0.1, 0.15, 0.8, 0.75])
+
             ax.boxplot(data_subset, patch_artist=True, whis=2.5,
                        boxprops=dict(facecolor='lightblue', alpha=0.7, edgecolor='black', linewidth=1.5),
                        whiskerprops=dict(color='black', linewidth=2),
                        capprops=dict(color='black', linewidth=2),
                        medianprops=dict(color='red', linewidth=2),
                        flierprops=dict(marker='o', color='black', markersize=6, alpha=0.6))
+
+            # Imposta limite Y in base al 99° percentile globale
+            flat_data = [item for sublist in data_subset for item in sublist]
+            if flat_data:
+                y_max = np.percentile(flat_data, 99) * 1.1
+                ax.set_ylim(0, y_max)
+
+                # Annotazioni outlier per ogni box
+                for idx, single_box in enumerate(data_subset):
+                    threshold = np.percentile(single_box, 99)
+                    num_outliers = sum(val > threshold for val in single_box)
+                    if num_outliers > 0:
+                        ax.annotate(f"+{num_outliers} outlier",
+                                    xy=(idx + 1, y_max * 0.95),
+                                    ha='center', fontsize=8, color='gray')
+
             ax.set_title(ylabel); ax.set_ylabel(ylabel)
             ax.set_xticks(range(1, len(labels_subset) + 1))
             ax.set_xticklabels(labels_subset, rotation=30, ha="right")

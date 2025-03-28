@@ -6,7 +6,6 @@ kem_list = ["secp256r1", "mlkem512", "p256_mlkem512", "secp384r1", "mlkem768", "
 NUM_RUNS, TIMEOUT, SLEEP = 5, 300, 2
 CLIENT = "client"
 CLIENT_DONE = r"\[INFO\] Test completato in .* Report: /app/output/request_logs/request_client\d+\.csv"
-
 START_CLIENT_PATH = os.path.abspath("start_client.py")
 
 
@@ -67,7 +66,6 @@ def run_single_test(i):
 
     if i < NUM_RUNS:
         time.sleep(SLEEP)
-
 
 # Esecuzione principale
 for kem in zip(kem_list):

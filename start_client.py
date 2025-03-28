@@ -10,7 +10,7 @@ GRAPH_DIR, SYSTEM_GRAPH_DIR, AVG_DIR = f"{OUTPUT_DIR}/graphs/", f"{MONITOR_DIR}/
 for d in [GRAPH_DIR, SYSTEM_GRAPH_DIR, AVG_DIR]: os.makedirs(d, exist_ok=True)
 NUM_REQUESTS, active_requests, active_requests_lock, global_stats = 500, 0, Lock(), {"cpu_usage": [], "memory_usage": []}
 
-CURL_COMMAND_TEMPLATE = ["curl", "--tlsv1.3", "--curves", "p521_mlkem1024", "--cacert", "/opt/certs/CA.crt", "-w",
+CURL_COMMAND_TEMPLATE = ["curl", "--tlsv1.3", "--curves", "secp256r1", "--cacert", "/opt/certs/CA.crt", "-w",
 "Connect Time: %{time_connect}, TLS Handshake: %{time_appconnect}, Total Time: %{time_total}, %{http_code}\n","-s", BASE_URL]
 
 def get_next_filename(base_path, base_name, extension):

@@ -1,4 +1,4 @@
-import json, os, re, math, time, logging, subprocess, csv, psutil, pandas as pd, matplotlib.pyplot as plt, 
+import json, os, re, math, time, logging, subprocess, csv, psutil, pandas as pd, matplotlib.pyplot as plt, numpy as np
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from threading import Thread, Lock
 from datetime import datetime
@@ -256,10 +256,14 @@ def generate_graphs_from_average_per_request():
     if df.empty:
         logging.warning("Il file delle medie per richiesta è vuoto.")
         return
-
     requests_per_batch, requests_per_plot = 500, 100
     total_batches = len(df) // requests_per_batch
-    batch_labels, boxplot_data = [], {k: [] for k in ["Avg_Connect_Time(ms)", "Avg_Handshake_Time(ms)", "Avg_Total_Time(ms)", "Avg_Elapsed_Time(ms)"]}
+    batch_labels, boxplot_data = [], {k: [] for k in [
+        "Avg_Connect_Time(ms)",
+        "Avg_Handshake_Time(ms)",
+        "Avg_Total_Time(ms)",
+        "Avg_Elapsed_Time(ms)"
+    ]}
 
     for b in range(total_batches):
         df_batch = df.iloc[b * requests_per_batch:(b + 1) * requests_per_batch]
@@ -301,6 +305,9 @@ def generate_graphs_from_average_per_request():
 
     # Boxplot segmentati ogni 3 batch
     max_per_image = 3
+    whis_val = 4.0
+    perc_limit = 99
+
     for metric, ylabel in {
         "Avg_Connect_Time(ms)": "Connect Time (ms)",
         "Avg_Handshake_Time(ms)": "Handshake Time (ms)",
@@ -317,22 +324,28 @@ def generate_graphs_from_average_per_request():
             fig = plt.figure(figsize=(max(6, len(labels_subset) * 1.8), 6))
             ax = fig.add_axes([0.1, 0.15, 0.8, 0.75])
 
-            ax.boxplot(data_subset, patch_artist=True, whis=2.5,
-                       boxprops=dict(facecolor='lightblue', alpha=0.7, edgecolor='black', linewidth=1.5),
-                       whiskerprops=dict(color='black', linewidth=2),
-                       capprops=dict(color='black', linewidth=2),
-                       medianprops=dict(color='red', linewidth=2),
-                       flierprops=dict(marker='o', color='black', markersize=6, alpha=0.6))
+            bp = ax.boxplot(data_subset, patch_artist=True, whis=whis_val,
+                            boxprops=dict(facecolor='lightblue', alpha=0.7, edgecolor='black', linewidth=1.5),
+                            whiskerprops=dict(color='black', linewidth=2),
+                            capprops=dict(color='black', linewidth=2),
+                            medianprops=dict(color='red', linewidth=2),
+                            flierprops=dict(marker='o', color='black', markersize=6, alpha=0.6))
 
-            # Imposta limite Y in base al 99° percentile globale
+            # Calcolo y_max intelligente
             flat_data = [item for sublist in data_subset for item in sublist]
             if flat_data:
-                y_max = np.percentile(flat_data, 99) * 1.1
+                # calcolo limite percentile e max whisker
+                perc_y = np.percentile(flat_data, perc_limit)
+                box_stats = [
+                    np.percentile(b, 75) + whis_val * (np.percentile(b, 75) - np.percentile(b, 25))
+                    for b in data_subset
+                ]
+                y_max = max(perc_y, max(box_stats)) * 1.05
                 ax.set_ylim(0, y_max)
 
-                # Annotazioni outlier per ogni box
+                # Annotazioni outlier sopra il percentile
                 for idx, single_box in enumerate(data_subset):
-                    threshold = np.percentile(single_box, 99)
+                    threshold = np.percentile(single_box, perc_limit)
                     num_outliers = sum(val > threshold for val in single_box)
                     if num_outliers > 0:
                         ax.annotate(f"+{num_outliers} outlier",

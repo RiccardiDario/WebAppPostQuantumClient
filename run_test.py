@@ -2,7 +2,7 @@
 #kem_list = ["secp256r1", "mlkem512", "p256_mlkem512"]
 #kem_list = ["secp384r1", "mlkem768", "p384_mlkem768"]
 #kem_list = ["secp521r1", "mlkem1024","p521_mlkem1024"]
-import subprocess, psutil, time, math, re, logging, os, random, csv, pandas as pd, numpy as np, matplotlib.pyplot as plt
+import json, subprocess, psutil, time, math, re, logging, os, random, csv, pandas as pd, numpy as np, matplotlib.pyplot as plt
 from collections import defaultdict
 
 kem_list = ["secp256r1", "mlkem512", "p256_mlkem512"]

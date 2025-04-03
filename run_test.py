@@ -6,6 +6,7 @@ import subprocess, psutil, time, math, re, logging, os, random, csv, pandas as p
 from collections import defaultdict
 
 kem_list = ["secp256r1", "mlkem512", "p256_mlkem512"]
+URL = "http://192.168.1.7/plan"
 NUM_RUNS, TIMEOUT, SLEEP = 3, 300, 2
 CLIENT, CLIENT_DONE = "client", r"\[INFO\] Test completato in .* Report: /app/output/request_logs/request_client\d+\.csv"
 
@@ -224,19 +225,30 @@ def generate_system_monitor_graph():
         plt.savefig(os.path.join(GRAPH_DIR, fname), dpi=300); plt.close()
         print(f"✅ Grafico salvato: {fname}")
 
-def run_all_tests_randomized():
-    plan = [(i, j) for i in range(len(kem_list)) for j in range(1, NUM_RUNS + 1)]
-    random.shuffle(plan)
+def run_all_tests_randomized(plan):
+    if not plan:
+        print("❌ Nessun piano ricevuto. Interrompo.")
+        return
     last_kem = None
-    for scenario_idx, replica in plan:
-        kem = kem_list[scenario_idx]
+    for kem_idx, replica in plan:
+        kem = kem_list[kem_idx]
         print(f"\n🔀 Scenario: {kem} | Replica: {replica}")
-        if kem != last_kem: update_kem(kem); last_kem = kem
+        if kem != last_kem: update_kem(kem); last_kem = kem 
         run_single_test(replica)
     print("\n🎉 Tutti i test completati!")
 
+def download_plan():
+    try:
+        response = subprocess.run(["curl", "-s", URL], stdout=subprocess.PIPE, text=True, timeout=5)
+        plan = json.loads(response.stdout)
+        return plan
+    except Exception as e:
+        print(f"Errore nel download del piano: {e}")
+        return []
+
 if __name__ == "__main__":
-    run_all_tests_randomized()
+    plan = download_plan()
+    run_all_tests_randomized(plan)
     print(f"\n📊 Generazione medie e grafici per tutti i batch completati...")
     process_all_batches_for_avg_per_request(input_folder, output_csv)
     generate_graphs_from_average_per_request()

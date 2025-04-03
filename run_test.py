@@ -5,12 +5,12 @@
 import subprocess, psutil, time, math, re, logging, os, random, csv, pandas as pd, numpy as np, matplotlib.pyplot as plt
 from collections import defaultdict
 
-kem_list = ["secp521r1", "mlkem1024", "p521_mlkem1024"]
+kem_list = ["secp256r1", "mlkem512", "p256_mlkem512"]
 NUM_RUNS, TIMEOUT, SLEEP = 3, 300, 2
-CLIENT, CLIENT_DONE = "client_analysis", r"\[INFO\] Test completato in .* Report: /app/output/request_logs/request_client\d+\.csv"
+CLIENT, CLIENT_DONE = "client", r"\[INFO\] Test completato in .* Report: /app/output/request_logs/request_client\d+\.csv"
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-START_CLIENT_PATH, ENV_PATH = os.path.join(BASE_DIR, "client/start_client.py"), os.path.join(BASE_DIR, "cert-generator/.env")
+START_CLIENT_PATH = os.path.join(BASE_DIR, "start_client.py")
 output_csv = os.path.join(BASE_DIR, "report/request_logs/avg/average_metrics_per_request.csv")
 GRAPH_DIR = os.path.join(BASE_DIR, "report/graph")
 input_folder, monitor_folder = os.path.join(BASE_DIR, "report/request_logs"), os.path.join(BASE_DIR, "report/system_logs")
@@ -74,18 +74,21 @@ def check_logs(container, pattern):
 def update_kem(kem):
     with open(START_CLIENT_PATH, "r", encoding="utf-8") as f:
         content = re.sub(r'("--curves",\s*")[^"]+(")', f'\\1{kem}\\2', f.read())
-    with open(START_CLIENT_PATH, "w", encoding="utf-8") as f: f.write(content)
+    with open(START_CLIENT_PATH, "w", encoding="utf-8") as f: 
+        f.write(content)
     print(f"✅ KEM: {kem}")
 
 def run_single_test(i):
     print(f"\n🚀 Test {i}")
     code, _, err = run_subprocess(["docker-compose", "up", "-d"], timeout=30)
-    if code != 0: print(f"❌ Errore: {err}")
+    if code != 0: 
+        print(f"❌ Errore: {err}")
         return
     print("⌛ In attesa log...")
     start = time.time()
     while time.time() - start < TIMEOUT:
-        if check_logs(CLIENT, CLIENT_DONE): print(f"✅ Completato.")
+        if check_logs(CLIENT, CLIENT_DONE): 
+            print(f"✅ Completato.")
             break
         time.sleep(SLEEP)
     else:

@@ -13,6 +13,7 @@ CLIENT, CLIENT_DONE = "client", r"\[INFO\] Test completato in .* Report: /app/ou
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 START_CLIENT_PATH = os.path.join(BASE_DIR, "start_client.py")
 output_csv = os.path.join(BASE_DIR, "report/request_logs/avg/average_metrics_per_request.csv")
+output_csv_avg = os.path.join(BASE_DIR, "report/request_logs/avg/average_metrics.csv")
 GRAPH_DIR = os.path.join(BASE_DIR, "report/graph")
 input_folder, monitor_folder = os.path.join(BASE_DIR, "report/request_logs"), os.path.join(BASE_DIR, "report/system_logs")
 for d in (GRAPH_DIR, input_folder, monitor_folder): os.makedirs(d, exist_ok=True)
@@ -246,10 +247,24 @@ def download_plan():
         print(f"Errore nel download del piano: {e}")
         return []
 
+def classify_algorithms_and_update_csv(csv_path):
+    if not os.path.exists(csv_path): return
+    df = pd.read_csv(csv_path)
+    df["Algorithms"] = df.apply(lambda r: (
+        "Ibrido" if "_" in r["KEM"].strip() or "_" in r["Signature"].strip() else
+        "Post-Quantum" if r["KEM"].strip() in {"mlkem512","mlkem768","mlkem1024"} and 
+                          r["Signature"].strip() in {"mldsa44","mldsa65","mldsa87"} else
+        "Pre-Quantum" if r["KEM"].strip() in {"secp256r1","secp384r1","secp521r1"} and 
+                          r["Signature"].strip() in {"ecdsa-with-SHA256","ecdsa-with-SHA384","ecdsa-with-SHA512"} else
+        "Sconosciuto"), axis=1)
+    df.to_csv(csv_path, index=False)
+    print(f"✅ Aggiunta colonna 'algorithms' a {csv_path}")
+
 if __name__ == "__main__":
     plan = download_plan()
     run_all_tests_randomized(plan)
     print(f"\n📊 Generazione medie e grafici per tutti i batch completati...")
     process_all_batches_for_avg_per_request(input_folder, output_csv)
+    classify_algorithms_and_update_csv(output_csv_avg)
     generate_graphs_from_average_per_request()
     generate_system_monitor_graph()
